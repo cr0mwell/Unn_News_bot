@@ -1,0 +1,15 @@
+telebot==0.0.3
+pyTelegramBotAPI==3.6.7
+emoji==0.5.4
+selenium==3.141.0
+numpy==1.18.1
+pandas==1.0.1
+pymorphy2==0.8
+pymorphy2-dicts-uk==2.4.1.1.1460299261
+pytz==2019.3
+requests==2.7.0
+scikit-learn==0.22.1
+scipy==1.4.1
+sklearn==0.0
+lightgbm==2.3.1
+stop_words==2018.7.23
