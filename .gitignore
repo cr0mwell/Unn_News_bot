@@ -2,7 +2,8 @@
 venv
 __pycache__
 *.log
-known_users.json
+src/known_users.json
+src/geckodriver.exe
 src/categorized_news.json
 src/news.json
 src/test_news.json

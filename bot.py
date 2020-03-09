@@ -5,8 +5,10 @@ import os
 import random
 import telebot
 
-from settings import (COLS_TO_NUM, NUM_TO_COLS)
-from spider import (parse_news, load_model_with_vetorizers, classify_text)
+from src.settings import (PROJ_PATH, COLS_TO_NUM, NUM_TO_COLS)
+from src.spider import parse_news
+from src.class_model import (get_vectorizers, get_class_model, get_dataset)
+from src.helper_functions import (load_object, save_object)
 
 
 COMPOSITIONS = {'Софії Ротару'        : ['Червону руту'],
@@ -19,8 +21,8 @@ bot         = telebot.TeleBot(BOT_TOKEN)
 user_step   = {}  # so they won't reset every time the bot restarts
 show_board  = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)  # create the image selection keyboard
 hide_board  = telebot.types.ReplyKeyboardRemove()  # if sent as reply_markup, will hide the keyboard
-
-tfidf_w, tfidf_ch, class_model, model_loaded = load_model_with_vetorizers()
+vectorizers = get_vectorizers()
+class_model = get_class_model()
 
 
 def convert_columns(users, new_type):
@@ -33,10 +35,9 @@ def convert_columns(users, new_type):
 
 
 try:
-    with open(os.path.join('src', 'known_users.json'), encoding='utf-8') as f:
-        known_users = json.load(f)
-        known_users = convert_columns(known_users, set)
-        print(f'Loaded known users: {known_users}')
+    known_users = load_object(os.path.join(PROJ_PATH, 'src', 'known_users.json'), json)
+    known_users = convert_columns(known_users, set)
+    print(f'Loaded known users: {known_users}')
 
 except (FileNotFoundError, json.decoder.JSONDecodeError):
     print('Failed to get data from the known_users.json file. Creating default dict')
@@ -293,19 +294,14 @@ def cmd_classify_article(m):
     "/classify_article command handler"
 
     uid = m.chat.id
-
-    if not model_loaded:
-        bot.send_message(uid, 'Виникла поилка при завантаженні класифікаційної моделі. 😔\n'
-                              'Спробуй, будь ласка пізніше')
-        return
-
     bot.send_message(uid, 'Введи новину або текст, який би ти хотів класифікувати?')
     bot.register_next_step_handler(m, do_classify_article)
 
 
 def do_classify_article(m):
 
-    predicted_column = classify_text(m.text, [tfidf_w, tfidf_ch], class_model)
+    dataset          = get_dataset([m.text], vectorizers)
+    predicted_column = class_model.predict(dataset)[0]
     bot.send_message(m.chat.id, f'Ставлю на те, що це відноситься до категорії "{NUM_TO_COLS[predicted_column]}"! 🧐')
 
 
@@ -313,6 +309,4 @@ if __name__ == "__main__":
     try:
         bot.polling()
     finally:
-        with open(os.path.join('src', 'known_users.json'), 'w', encoding='utf-8') as f:
-            known_users = convert_columns(known_users, list)
-            json.dump(known_users, f)
+        save_object(known_users, os.path.join(PROJ_PATH, 'src', 'known_users.json'), json)
