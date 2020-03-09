@@ -1,5 +1,7 @@
 UnnParserBot
 
+Version 0.1.0
+
 Telegram bot to parse the https://unn.com.ua website for news.
 Allows to specify the article columns to scrap as well as to set the date limits and the batch size.
 Columns classification is achieved using pre-trained LogisticRegression ML model.
