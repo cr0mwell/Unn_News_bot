@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 
-from scipy.sparse import hstack
+from scipy.sparse import vstack, hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, classification_report
@@ -46,18 +46,7 @@ def load_news():
     le.fit(CLASSES)
     headings = le.transform(headings)
 
-    # Splitting the texts into train/test folds
-    texts_train, texts_test, y_train, y_test = train_test_split([[text] for text in texts],
-                                                                headings,
-                                                                test_size=0.2,
-                                                                stratify=headings,
-                                                                random_state=42)
-
-    # As texts_train, texts_test are now list of lists ([['foo'], ['bar']]), converting them to lists (['foo', 'bar'])
-    texts_train = [t[0] for t in texts_train]
-    texts_test  = [t[0] for t in texts_test]
-
-    return texts_train, texts_test, y_train, y_test
+    return texts, headings
 
 
 def create_vectorizers():
@@ -67,7 +56,17 @@ def create_vectorizers():
     """
 
     print('Creating vectorizer objects')
-    texts_train, _, _, _ = load_news()
+    texts, headings = load_news()
+
+    # Splitting the texts into train/test folds
+    texts_train, _, _, _ = train_test_split([[text] for text in texts],
+                                            headings,
+                                            test_size=0.2,
+                                            stratify=headings,
+                                            random_state=42)
+
+    # As texts_train is now list of lists ([['foo'], ['bar']]), converting it to lists (['foo', 'bar'])
+    texts_train = [t[0] for t in texts_train]
 
     morph = MorphAnalyzer(lang='uk')
 
@@ -158,17 +157,13 @@ def create_class_model():
     # Feature engineering
     ######################
 
-    texts_train, texts_test, y_train, y_test = load_news()
+    texts, headings = load_news()
     tfidf_w, tfidf_ch = get_vectorizers()
 
     print('Collecting the dataset')
-    w_train = tfidf_w.transform(texts_train)
-    ch_train = tfidf_ch.transform(texts_train)
-    train_ds = hstack([w_train, ch_train])
-
-    w_test = tfidf_w.transform(texts_test)
-    ch_test = tfidf_ch.transform(texts_test)
-    test_ds = hstack([w_test, ch_test])
+    w_trans = tfidf_w.transform(texts)
+    ch_trans = tfidf_ch.transform(texts)
+    all_ds = hstack([w_trans, ch_trans])
 
     # Saving the dataset
     # save_npz(os.path.join(PROJ_PATH, 'src', 'class_data.npz'), all_ds)
@@ -177,20 +172,11 @@ def create_class_model():
     # LogisticRegression model
     ###########################
 
-    # Training the model
+    # Training the model on all data
+    # as the optimal hyperparameters were already obtained in the notebooks during cross validation process
     print('Training LogisticRegression model')
     classifier = LogisticRegression(solver='saga')
-    log_reg = classifier.fit(train_ds, y_train)
-
-    # Predicting
-    print('Predicting test target with LogisticRegression model')
-    log_predictions = log_reg.predict(test_ds)
-
-    # Evaluating with f1 weighted score (words & chars)
-    print(f'Test evaluation: {f1_score(y_test, log_predictions, average="weighted")}')
-    print(f'Train evaluation: {f1_score(y_train, log_reg.predict(train_ds), average="weighted")}')
-
-    print(classification_report(y_test, log_predictions, zero_division=True, target_names=CLASSES))
+    log_reg = classifier.fit(all_ds, headings)
 
     # Saving the model. sklearn models are not JSON serializable unfortunately
     print('Saving the LogisticRegression model')
