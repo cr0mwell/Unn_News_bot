@@ -16,7 +16,10 @@ COMPOSITIONS = {'Софії Ротару'        : ['Червону руту'],
                 'Павла Зіброва'       : ['Хрещатик'],
                 'Іво Бобула'          : ['Старе джерело', 'Місячне колесо'],
                 'Михайла Поплавського': ['Кропиву', 'Юний орел']}
-BOT_TOKEN   = "XXXX"
+
+with open(os.path.join(PROJ_PATH, 'src', 'bot_token')) as f:
+    BOT_TOKEN = f.read()
+
 bot         = telebot.TeleBot(BOT_TOKEN)
 user_step   = {}  # so they won't reset every time the bot restarts
 show_board  = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)  # create the image selection keyboard
@@ -42,6 +45,9 @@ try:
 except (FileNotFoundError, json.decoder.JSONDecodeError):
     print('Failed to get data from the known_users.json file. Creating default dict')
     known_users = {}
+
+finally:
+    print('Started serving the requests')
 
 
 ###################
@@ -282,7 +288,7 @@ def cmd_search_news(m):
     f'{"з усіх рубрик" if known_users[uid]["columns"] == set(COLS_TO_NUM.values()) else "з рубрик " + ", ".join([NUM_TO_COLS[col] for col in known_users[uid]["columns"]])} '
     f'за {known_users[uid]["period"]}. Як тільки з\'являться результати, він відразу вишле їх тобі!')
 
-    parse_news(bot, uid, known_users[uid])
+    parse_news(bot, uid, known_users[uid], class_model, vectorizers)
 
     # Dropping the setting to defaults after the /exit command was called
     known_users[uid]['online'] = True

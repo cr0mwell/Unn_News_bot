@@ -223,7 +223,6 @@ def get_news_for_period(driver, period, last_article):
 
                 try:
                     div_elem = driver.find_element_by_xpath('//div[contains(@class, "b-news-feed-date")]//following::div[1]')
-                    print(f'Found div {date_element.get_attribute("id")}')
                     li_elems = div_elem.find_elements_by_tag_name('li')
 
                     for li_elem in li_elems:
@@ -260,7 +259,7 @@ def get_news_for_period(driver, period, last_article):
     return article_queue
 
 
-def parse_news(bot, uid, known_user):
+def parse_news(bot, uid, known_user, class_model, vectorizers):
     """
     Parses the news for the given period of time till the last article(if given) for the given user.
     Classifies them, filters by the requested columns and returns in batches.
@@ -277,12 +276,6 @@ def parse_news(bot, uid, known_user):
 
     # Some kind of a lock for a user
     known_user['search_in_progress'] = True
-
-    # Loading vectorizer objects
-    vectorizers = get_vectorizers()
-
-    # Loading classification model
-    class_model = get_class_model()
 
     driver       = webdriver.Firefox(firefox_binary=FIREFOX_PATH, options=options)
     period       = known_user['period']

@@ -15,7 +15,7 @@ Installation & usage
   and add its location to the PATH
 * Update FIREFOX_PATH and PROJ_PATH variables in $PROJECT_PATH/src/settings.py
   with the respective locations of the Mozilla Firefox executive binary and your project root directory location
-* Update BOT_TOKEN variable in $PROJECT_PATH/bot.py with your Telegram token
+* create $PROJECT_PATH/src/bot_token file and add your BOT_TOKEN into it.
 * Collect the news from the https://unn.com.ua by running $PROJECT_PATH/src/spider.py.
   NOTE: it may take a few days for the script to collect the full news archive (for 6 months).
   You can set the 'max_page' argument in the get_news() call to set the page limit.

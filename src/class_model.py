@@ -14,9 +14,7 @@ from pymorphy2 import MorphAnalyzer
 from src.helper_functions import (load_object, save_object, strip_accents)
 from src.settings import (PROJ_PATH, COLS_TO_NUM)
 
-CLASS_MODEL = None  # classification model object
-VECTORIZERS = None  # list of vectorizer objects
-CLASSES     = list(COLS_TO_NUM.keys())
+CLASSES = list(COLS_TO_NUM.keys())
 
 
 def load_news():
@@ -109,22 +107,16 @@ def create_vectorizers():
 
 def get_vectorizers():
     """
-    If VECTORIZERS is not set
-    loads vectorizers objects from the 'class_tfidf_w.vct' and 'class_tfidf_ch.vct' files.
-    Returns vectorizers objects as list.
+    If vectorizer 'class_tfidf_w.vct' and 'class_tfidf_ch.vct' files don't exist creates them.
+    Returns vectorizers objects loaded from the files as list.
     """
 
-    global VECTORIZERS
+    if not all(map(os.path.exists, [os.path.join(PROJ_PATH, 'src', 'class_tfidf_w.vct'),
+                                    os.path.join(PROJ_PATH, 'src', 'class_tfidf_ch.vct')])):
+        create_vectorizers()
 
-    if VECTORIZERS is None:
-        if not all(map(os.path.exists, [os.path.join(PROJ_PATH, 'src', 'class_tfidf_w.vct'),
-                                        os.path.join(PROJ_PATH, 'src', 'class_tfidf_ch.vct')])):
-            create_vectorizers()
-
-        VECTORIZERS = [load_object('class_tfidf_w.vct', pickle),
-                       load_object('class_tfidf_ch.vct', pickle)]
-
-    return VECTORIZERS
+    return [load_object('class_tfidf_w.vct', pickle),
+            load_object('class_tfidf_ch.vct', pickle)]
 
 
 def get_dataset(texts, vectorizers, fit=False):
@@ -187,20 +179,14 @@ def create_class_model():
 
 def get_class_model():
     """
-    Returns CLASS_MODEL value if it's set.
     Loads the classification model from the './class_model_log.md' file.
-    If the file doesn't exist creates a new model and saves it to the file.
+    If the file doesn't exist creates a new model, saves it to the file and returns it to the caller.
     """
 
-    global CLASS_MODEL
+    if not os.path.exists(os.path.join(PROJ_PATH, 'src', 'class_model_log.md')):
+        create_class_model()
 
-    if CLASS_MODEL is None:
-        if not os.path.exists(os.path.join(PROJ_PATH, 'src', 'class_model_log.md')):
-            create_class_model()
-
-        CLASS_MODEL = load_object('class_model_log.md', pickle)
-
-    return CLASS_MODEL
+    return load_object('class_model_log.md', pickle)
 
 
 if __name__ == "__main__":
